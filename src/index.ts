@@ -9,6 +9,7 @@ import * as pollCommand from './commands/poll';
 import { startReminderJob } from './reminderJob';
 import { createRoostClient } from './roost/client';
 import { startRoost } from './roost/startRoost';
+import { createShutdown } from './shutdown';
 
 // override: true so this repo's .env wins over anything already exported by the
 // shell. A global DISCORD_TOKEN in ~/.zshrc (Perch's) otherwise shadows it
@@ -67,3 +68,12 @@ client.login(config.discordToken);
 
 const roostClient = createRoostClient(db, config);
 void startRoost(() => roostClient.login(config.roostToken), console.error);
+
+const shutdown = createShutdown({
+  clients: [client, roostClient],
+  db,
+  exit: (code) => process.exit(code),
+  log: console.log,
+});
+process.once('SIGTERM', () => void shutdown('SIGTERM'));
+process.once('SIGINT', () => void shutdown('SIGINT'));
