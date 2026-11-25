@@ -45,10 +45,24 @@ describe('taskRepository', () => {
 
   it('marks a task done and sets completedAt', () => {
     const task = createTask(db, { description: 'A', assigneeId: 'user-1', dueDate: '2026-07-17', createdBy: 'user-2' });
-    const done = markTaskDone(db, task.id);
+    expect(markTaskDone(db, task.id)).toBe(true);
 
+    const done = getTaskById(db, task.id);
     expect(done?.status).toBe('done');
     expect(done?.completedAt).not.toBeNull();
+  });
+
+  it('does not overwrite completedAt when marking an already-done task done', () => {
+    const task = createTask(db, { description: 'A', assigneeId: 'user-1', dueDate: '2026-07-17', createdBy: 'user-2' });
+    expect(markTaskDone(db, task.id)).toBe(true);
+    const completedAt = getTaskById(db, task.id)?.completedAt;
+
+    expect(markTaskDone(db, task.id)).toBe(false);
+    expect(getTaskById(db, task.id)?.completedAt).toBe(completedAt);
+  });
+
+  it('returns false marking a task done that does not exist', () => {
+    expect(markTaskDone(db, 999)).toBe(false);
   });
 
   it('deletes a task', () => {

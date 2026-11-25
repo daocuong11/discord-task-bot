@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import type { Database } from 'better-sqlite3';
 import { parseDueDate } from '../lib/parseDate';
 import { createTask, listTasks, getTaskById, markTaskDone, deleteTask } from '../repositories/taskRepository';
@@ -118,7 +118,15 @@ async function handleDone(interaction: ChatInputCommandInteraction, db: Database
     return;
   }
 
-  markTaskDone(db, id);
+  const changed = markTaskDone(db, id);
+  if (!changed) {
+    await interaction.reply({
+      content: `Task #${id} is already done.`,
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
   await interaction.reply(`✅ Task #${id} "${existing.description}" marked done.`);
 }
 
